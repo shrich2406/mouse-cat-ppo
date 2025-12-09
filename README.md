@@ -2,78 +2,101 @@
 
 Demo
 https://github.com/user-attachments/assets/2350b192-098b-45c5-a6ff-a2d6d4ed5c9c
-# 🐭 Mouse–Cat PPO Reinforcement Learning Project
+# 🐭🐱 Mouse–Cat PPO Reinforcement Learning Environment
 
-This project implements a custom reinforcement learning environment where:
-
-- The **mouse is trained using PPO (Stable-Baselines3)**  
-- The **cat chases the mouse** using a greedy Manhattan rule  
-- The **mouse moves 2 small steps per action**, while the **cat moves 1**  
-- **Cheese and traps are randomized every episode**  
-- The mouse can escape, get trapped, or get caught  
-- A full **Pygame UI** visualizes games using the trained model
-
-This project is designed for RL experimentation and academic demonstration.
+This project implements a custom reinforcement learning environment where a **mouse agent** must navigate a grid, collect cheese, avoid traps, and reach an exit — all while being chased by a deterministic **cat**. The mouse is trained using **Proximal Policy Optimization (PPO)**, and the environment includes a **Pygame UI** for visualization.
 
 ---
 
-## 🧩 Environment Summary
+## 🚀 Project Overview
 
-Implemented in **`mouse_cat_core_env.py`**
+The Mouse–Cat environment is designed to explore RL behavior in a partially adversarial grid world:
 
-### Grid  
-- 12×12 board  
-- Start position fixed at **(0, mid)**  
-- Exit fixed at **(11, mid)**  
+- The **mouse agent** is trained with PPO to reach the exit.
+- The **cat** is not an RL agent — it follows a deterministic chase movement.
+- The grid includes:
+  - Randomized trap tiles  
+  - Randomized cheese tiles  
+  - Fixed start and exit  
+- The mouse moves **2 steps per turn**, and the cat moves **1 chasing step**.
 
-### Mouse  
-- Moves **two 1-step submoves** every action  
-- Actions:  
-  `0 = up`, `1 = down`, `2 = left`, `3 = right`  
-- Dies if it *lands* on a trap  
-- Gets reward for cheese  
-- Gets bonus reward for escaping
-
-### Cat  
-- Starts at `(1, mid)`  
-- Moves **one tile per turn**  
-- Greedy towards mouse  
-- Mouse dies if cat reaches mouse
-
-### Cheese  
-- 3 randomized cheese locations  
-- Each gives **+4 reward**  
-- Cheese is optional
-
-### Traps  
-- 6 randomized traps  
-- Touching trap = **episode ends**
-
-### Episode ends when:  
-- Mouse escapes → +10 (+bonus)  
-- Mouse steps on trap → –12  
-- Cat catches mouse → –12  
-- Step limit reached → –3  
+This environment supports RL experimentation, curriculum design, and gameplay visualization.
 
 ---
 
-## 🎮 Pygame Visualization
+## 📁 Repository Structure
+mouse-cat-ppo/
+│
+├── assets/ # Screenshots or UI assets
+├── mouse_agent.py # PPO training script for the mouse
+├── mouse_env.py # Gym wrapper for RL agent
+├── mouse_cat_core_env.py # Core environment logic
+├── pygame_ui.py # Pygame visualization interface
+├── .gitignore
+└── README.md
+## 🧠 Environment Design
 
-The UI is implemented in **`pygame_ui.py`**.
+### Grid Rules
+- Default grid size: **12 × 12**
+- Mouse start: `(0, grid_size // 2)`
+- Exit: `(grid_size − 1, grid_size // 2)`
+- Random traps and cheese spawn each episode.
 
-It displays:
+### Mouse Movement
+- Moves **two single-steps** each turn.
+- Dies only if its final landing tile is a trap.
+- Reward-driven pathfinding.
 
-- Mouse  
-- Cat  
-- Start / Exit  
-- Cheese  
-- Traps  
-- Reward each step  
+### Cat Movement
+- Moves **one step per turn**
+- Always moves toward mouse's position (greedy chasing)
+- Touching cat ends episode with penalty.
 
-Run it with:
+### Episode Termination
+- Mouse reaches exit  
+- Mouse steps on trap  
+- Cat catches mouse  
+- Max-step limit reached  
+
+---
+
+## 🎯 Action & Observation Space
+
+### Action Space
+Mouse can choose from 4 discrete actions:
+0 → Up
+1 → Down
+2 → Left
+3 → Right
+### Observation Space
+The observation vector includes:
+- Mouse position  
+- Cat position  
+- Trap locations  
+- Cheese locations  
+- Exit tile location  
+- Remaining steps  
+- Flattened into a numeric state for PPO  
+
+---
+
+## 💰 Reward Structure
+
+| Event            | Reward |
+|------------------|--------|
+| Reach exit       | +100   |
+| Collect cheese   | +10    |
+| Step on trap     | -10    |
+| Caught by cat    | -100   |
+| Each step taken  | -1     |
+
+These values can be adjusted in `mouse_cat_core_env.py` to tune agent behavior.
+
+---
+
+## 🏋️ Training the PPO Agent
+
+To train the mouse agent with PPO, run:
 
 ```bash
-
-
-
-
+python mouse_agent.py
