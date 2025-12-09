@@ -1,3 +1,5 @@
+Demo
+https://github.com/user-attachments/assets/2350b192-098b-45c5-a6ff-a2d6d4ed5c9c
 # 🐭 Mouse–Cat PPO Reinforcement Learning Project
 
 This project implements a custom reinforcement learning environment where:
@@ -69,9 +71,8 @@ It displays:
 Run it with:
 
 ```bash
-python pygame_ui.py
 
-https://github.com/user-attachments/assets/eafa3403-4705-4a46-80ae-44cb98c115bc
 
+https://github.com/user-attachments/assets/2350b192-098b-45c5-a6ff-a2d6d4ed5c9c
 
 
