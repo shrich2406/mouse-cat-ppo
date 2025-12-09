@@ -2,131 +2,80 @@ import pygame
 import sys
 from mouse_cat_core_env import MouseCatCoreEnv
 from stable_baselines3 import PPO
-import numpy as np
 
-# -----------------------------------------------------------
-# SETTINGS
-# -----------------------------------------------------------
-CELL_SIZE = 60
-GRID_COLOR = (210, 210, 210)
-BG_COLOR = (245, 245, 245)
-
-USE_PPO = True  # set False for random movement
-
+CELL = 60
 pygame.init()
 screen = pygame.display.set_mode((900, 900))
-pygame.display.set_caption("Mouse vs Cat - PPO Game")
-clock = pygame.time.Clock()
-font = pygame.font.SysFont("Arial", 26, bold=True)
+font = pygame.font.SysFont("Arial", 26)
 
-# -----------------------------------------------------------
-# Load sprites
-# -----------------------------------------------------------
-def load_sprite(path):
-    img = pygame.image.load(path).convert_alpha()
-    return pygame.transform.scale(img, (CELL_SIZE, CELL_SIZE))
+mouse_img = pygame.transform.scale(pygame.image.load("assets/mouse.png"), (CELL, CELL))
+cat_img = pygame.transform.scale(pygame.image.load("assets/cat.png"), (CELL, CELL))
+trap_img = pygame.transform.scale(pygame.image.load("assets/trap.png"), (CELL, CELL))
+cheese_img = pygame.transform.scale(pygame.image.load("assets/cheese.png"), (CELL, CELL))
+start_img = pygame.transform.scale(pygame.image.load("assets/start.png"), (CELL, CELL))
+exit_img = pygame.transform.scale(pygame.image.load("assets/exit.png"), (CELL, CELL))
 
-mouse_img = load_sprite("assets/mouse.png")
-cat_img = load_sprite("assets/cat.png")
-cheese_img = load_sprite("assets/cheese.png")
-trap_img = load_sprite("assets/trap.png")
-start_img = load_sprite("assets/start.png")
-exit_img = load_sprite("assets/exit.png")
-
-# -----------------------------------------------------------
-# Load PPO model
-# -----------------------------------------------------------
-model = None
-if USE_PPO:
-    try:
-        print("📦 Loading PPO model mouse_model.zip ...")
-        model = PPO.load("mouse_model.zip")
-        print("✅ PPO model loaded! (stochastic policy)")
-    except:
-        print("❌ PPO model missing, switching to random mode...")
-        USE_PPO = False
+try:
+    print("📦 Loading PPO model mouse_model.zip ...")
+    model = PPO.load("mouse_model")
+    print("✅ PPO model loaded! (stochastic policy)")
+except:
+    print("❌ PPO model missing! Exiting.")
+    sys.exit()
 
 
-# -----------------------------------------------------------
-# Draw grid elements
-# -----------------------------------------------------------
 def draw(env):
-    screen.fill(BG_COLOR)
+    screen.fill((240, 240, 240))
 
-    # grid
     for x in range(env.grid_size):
-        pygame.draw.line(screen, GRID_COLOR, (x * CELL_SIZE, 0),
-                         (x * CELL_SIZE, env.grid_size * CELL_SIZE))
-        pygame.draw.line(screen, GRID_COLOR, (0, x * CELL_SIZE),
-                         (env.grid_size * CELL_SIZE, x * CELL_SIZE))
+        pygame.draw.line(screen, (180, 180, 180), (x * CELL, 0), (x * CELL, env.grid_size * CELL))
 
-    # start + exit
-    screen.blit(start_img, (env.start_pos[0] * CELL_SIZE, env.start_pos[1] * CELL_SIZE))
-    screen.blit(exit_img, (env.exit[0] * CELL_SIZE, env.exit[1] * CELL_SIZE))
+    for y in range(env.grid_size):
+        pygame.draw.line(screen, (180, 180, 180), (0, y * CELL), (env.grid_size * CELL, y * CELL))
 
-    # cheeses
+    # Start & exit
+    screen.blit(start_img, (env.start_pos[0] * CELL, env.start_pos[1] * CELL))
+    screen.blit(exit_img, (env.exit[0] * CELL, env.exit[1] * CELL))
+
+    # Cheeses
     for i, pos in enumerate(env.cheeses):
         if env.cheese_alive[i]:
-            screen.blit(cheese_img, (pos[0] * CELL_SIZE, pos[1] * CELL_SIZE))
+            screen.blit(cheese_img, (pos[0] * CELL, pos[1] * CELL))
 
-    # traps
-    for (tx, ty) in env.traps:
-        screen.blit(trap_img, (tx * CELL_SIZE, ty * CELL_SIZE))
+    # Traps
+    for t in env.traps:
+        screen.blit(trap_img, (t[0] * CELL, t[1] * CELL))
 
-    # mouse and cat
-    screen.blit(mouse_img, (env.mouse[0] * CELL_SIZE, env.mouse[1] * CELL_SIZE))
-    screen.blit(cat_img, (env.cat[0] * CELL_SIZE, env.cat[1] * CELL_SIZE))
+    # Mouse & cat
+    screen.blit(mouse_img, (env.mouse[0] * CELL, env.mouse[1] * CELL))
+    screen.blit(cat_img, (env.cat[0] * CELL, env.cat[1] * CELL))
 
 
-# -----------------------------------------------------------
-# MAIN LOOP
-# -----------------------------------------------------------
 def run():
     env = MouseCatCoreEnv()
     obs = env.reset()
+    done = False
 
-    running = True
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
 
-    while running:
-        clock.tick(7)  # FPS
-
-        # -----------------------------------
-        # PPO or random action
-        # -----------------------------------
-        if USE_PPO and model is not None:
-            action, _ = model.predict(obs, deterministic=False)
-        else:
-            action = np.random.randint(0, 4)
-
-        # -----------------------------------
-        # STEP THE ENVIRONMENT (FIXED)
-        # -----------------------------------
+        action, _ = model.predict(obs, deterministic=False)
         obs, reward, done, info = env.step(int(action))
 
         draw(env)
 
-        # text
-        reward_text = font.render(f"Reward: {reward}", True, (10, 10, 10))
-        screen.blit(reward_text, (10, 750))
+        reward_msg = font.render(f"Reward: {reward}", True, (0, 0, 0))
+        screen.blit(reward_msg, (10, 850))
 
         pygame.display.update()
+        pygame.time.delay(120)
 
-        # End of game
         if done:
-            pygame.time.wait(1200)
+            pygame.time.delay(700)
             obs = env.reset()
 
-        # Check quit
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
 
-    pygame.quit()
-    sys.exit()
-
-
-# -----------------------------------------------------------
-# RUN
-# -----------------------------------------------------------
 if __name__ == "__main__":
     run()

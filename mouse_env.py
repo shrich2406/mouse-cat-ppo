@@ -3,6 +3,7 @@ from gymnasium import spaces
 import numpy as np
 from mouse_cat_core_env import MouseCatCoreEnv
 
+
 class MouseEnv(gym.Env):
     metadata = {"render_modes": []}
 
@@ -10,12 +11,12 @@ class MouseEnv(gym.Env):
         super().__init__()
         self.core = MouseCatCoreEnv()
 
-        self.action_space = spaces.Discrete(4)
-
-        # Matches 8-dim observation
+        # 2 mouse + 2 cat + 2 exit + (3 cheeses × 2 coords) + 1 flag = 13
         self.observation_space = spaces.Box(
-            low=0, high=20, shape=(8,), dtype=np.float32
+            low=0, high=12, shape=(13,), dtype=np.float32
         )
+
+        self.action_space = spaces.Discrete(4)
 
     def reset(self, seed=None, options=None):
         obs = self.core.reset()
